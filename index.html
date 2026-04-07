@@ -3,24 +3,72 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chuyển đổi Dương lịch → Âm lịch</title>
+    <title>Lịch Vạn Niên 2025 - Bản Web</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <main class="container">
-      <h1>Chuyển đổi ngày Dương lịch sang Âm lịch</h1>
+      <h1>Lịch Vạn Niên 2025 (Bản Web)</h1>
       <p class="description">
-        Nhập ngày dương lịch (mặc định múi giờ Việt Nam UTC+7) để xem ngày âm lịch tương ứng.
+        Bộ tiện ích lịch Việt theo phong cách Lịch Vạn Niên: đổi ngày Âm Dương, Can Chi, giờ hoàng đạo,
+        tuổi hợp và ghi chú ngày âm.
       </p>
 
-      <form id="convert-form" class="form">
-        <label for="solar-date">Ngày dương lịch</label>
-        <input id="solar-date" name="solar-date" type="date" required />
+      <section class="panel">
+        <h2>1) Đổi ngày Dương lịch → Âm lịch</h2>
+        <form id="convert-form" class="form">
+          <label for="solar-date">Ngày dương lịch</label>
+          <input id="solar-date" name="solar-date" type="date" required />
 
-        <button type="submit">Chuyển đổi</button>
-      </form>
+          <label for="timezone">Múi giờ</label>
+          <select id="timezone" name="timezone">
+            <option value="7" selected>UTC+7 (Việt Nam)</option>
+            <option value="0">UTC+0</option>
+            <option value="8">UTC+8</option>
+          </select>
 
-      <section id="result" class="result" aria-live="polite"></section>
+          <button type="submit">Chuyển đổi</button>
+        </form>
+        <section id="result" class="result" aria-live="polite"></section>
+      </section>
+
+      <section class="panel">
+        <h2>2) Xem tuổi hợp (kết hôn / làm ăn)</h2>
+        <form id="compatibility-form" class="form inline-form">
+          <input id="year-a" type="number" min="1900" max="2100" placeholder="Năm sinh A" required />
+          <input id="year-b" type="number" min="1900" max="2100" placeholder="Năm sinh B" required />
+          <button type="submit">Xem hợp tuổi</button>
+        </form>
+        <section id="compatibility-result" class="result" aria-live="polite"></section>
+      </section>
+
+      <section class="panel">
+        <h2>3) Giờ hoàng đạo trong ngày</h2>
+        <form id="good-hours-form" class="form inline-form">
+          <input id="good-hours-date" type="date" required />
+          <button type="submit">Tra cứu giờ tốt</button>
+        </form>
+        <section id="good-hours-result" class="result" aria-live="polite"></section>
+      </section>
+
+      <section class="panel">
+        <h2>4) Ghi chú ngày âm (Rằm, Mồng Một, Giỗ...)</h2>
+        <form id="note-form" class="form inline-form">
+          <input id="note-lunar" type="text" placeholder="Ví dụ: 15/8" required />
+          <input id="note-text" type="text" placeholder="Nội dung ghi chú" required />
+          <button type="submit">Lưu ghi chú</button>
+        </form>
+        <section id="note-list" class="result" aria-live="polite"></section>
+      </section>
+
+      <section class="panel">
+        <h2>5) Tử vi nhanh 12 cung hoàng đạo</h2>
+        <form id="zodiac-form" class="form inline-form">
+          <input id="zodiac-date" type="date" required />
+          <button type="submit">Xem tử vi hôm nay</button>
+        </form>
+        <section id="zodiac-result" class="result" aria-live="polite"></section>
+      </section>
     </main>
 
     <script src="script.js"></script>

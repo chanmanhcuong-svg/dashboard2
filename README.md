@@ -1,12 +1,21 @@
-# Ứng dụng chuyển đổi Dương lịch sang Âm lịch
+# Lịch Vạn Niên 2025 (Web App)
 
-Ứng dụng web tĩnh đơn giản để chuyển đổi ngày dương lịch sang ngày âm lịch Việt Nam (mặc định UTC+7).
+Ứng dụng web tĩnh mô phỏng nhóm tiện ích chính của app Lịch Vạn Niên trên Zegome, tập trung vào nhu cầu tra cứu nhanh hằng ngày.
+
+## Tính năng
+
+- Đổi ngày Dương lịch sang Âm lịch (hỗ trợ múi giờ).
+- Hiển thị Can Chi năm âm lịch và Can Chi ngày.
+- Tra cứu giờ hoàng đạo theo ngày.
+- Xem hợp tuổi cơ bản theo địa chi.
+- Ghi chú ngày âm (lưu local trên trình duyệt).
+- Tử vi nhanh 12 cung hoàng đạo.
 
 ## Chạy nhanh
 
-Chỉ cần mở `index.html` bằng trình duyệt.
+Mở trực tiếp `index.html` bằng trình duyệt.
 
-## Ghi chú
+## Nguồn tham chiếu tính năng
 
-- Thuật toán chuyển đổi dựa trên cách tính thiên văn phổ biến cho lịch âm Việt Nam.
-- Kết quả phù hợp cho nhu cầu tra cứu thông thường.
+Tham khảo mô tả ứng dụng “Lịch Vạn Niên” tại trang sản phẩm Zegome:
+https://zegome.com/product/lich-van-nien/
