@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chuyển đổi Dương lịch → Âm lịch</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Chuyển đổi ngày Dương lịch sang Âm lịch</h1>
+      <p class="description">
+        Nhập ngày dương lịch (mặc định múi giờ Việt Nam UTC+7) để xem ngày âm lịch tương ứng.
+      </p>
+
+      <form id="convert-form" class="form">
+        <label for="solar-date">Ngày dương lịch</label>
+        <input id="solar-date" name="solar-date" type="date" required />
+
+        <button type="submit">Chuyển đổi</button>
+      </form>
+
+      <section id="result" class="result" aria-live="polite"></section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
