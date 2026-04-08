@@ -1,376 +1,425 @@
-function int(value) {
-  return Math.floor(value);
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+
+const scoreEl = document.getElementById('score');
+const healthEl = document.getElementById('health');
+const levelEl = document.getElementById('level');
+const highScoreEl = document.getElementById('high-score');
+const finalScoreEl = document.getElementById('final-score');
+const finalHighScoreEl = document.getElementById('final-high-score');
+
+const startScreen = document.getElementById('start-screen');
+const gameOverScreen = document.getElementById('game-over-screen');
+const startBtn = document.getElementById('start-btn');
+const restartBtn = document.getElementById('restart-btn');
+const soundToggle = document.getElementById('sound-toggle');
+
+const groundY = canvas.height - 65;
+
+const game = {
+  running: false,
+  score: 0,
+  health: 100,
+  level: 1,
+  drones: [],
+  interceptors: [],
+  explosions: [],
+  powerUps: [],
+  lastSpawn: 0,
+  spawnGap: 1200,
+  lastAutoShot: 0,
+  slowUntil: 0,
+  autoUntil: 0,
+  soundOn: true,
+  baseX: canvas.width / 2,
+  highScore: Number(localStorage.getItem('skyShieldHighScore') || 0),
+};
+
+highScoreEl.textContent = game.highScore;
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function beep(freq, duration, volume = 0.05, type = 'sine') {
+  if (!game.soundOn) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.value = volume;
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
 }
 
-function jdFromDate(dd, mm, yy) {
-  const a = int((14 - mm) / 12);
-  const y = yy + 4800 - a;
-  const m = mm + 12 * a - 3;
-  let jd = dd + int((153 * m + 2) / 5) + 365 * y + int(y / 4) - int(y / 100) + int(y / 400) - 32045;
+function random(min, max) {
+  return Math.random() * (max - min) + min;
+}
 
-  if (jd < 2299161) {
-    jd = dd + int((153 * m + 2) / 5) + 365 * y + int(y / 4) - 32083;
+function updateHUD() {
+  scoreEl.textContent = game.score;
+  healthEl.textContent = game.health;
+  levelEl.textContent = game.level;
+  highScoreEl.textContent = game.highScore;
+}
+
+function createDrone() {
+  const x = random(25, canvas.width - 25);
+  const y = -20;
+  const speed = random(0.45, 1.15) + game.level * 0.09;
+  const size = random(13, 19);
+
+  game.drones.push({ x, y, speed, size });
+}
+
+function fireInterceptor(targetX, targetY) {
+  const x = game.baseX;
+  const y = groundY;
+  const angle = Math.atan2(targetY - y, targetX - x);
+  const speed = 5.6;
+
+  game.interceptors.push({
+    x,
+    y,
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    radius: 4,
+    life: 150,
+  });
+
+  beep(510, 0.06, 0.04, 'triangle');
+}
+
+function spawnPowerUp(x, y) {
+  const list = ['emp', 'slow', 'auto', 'repair'];
+  const kind = list[Math.floor(random(0, list.length))];
+  game.powerUps.push({ x, y, kind, radius: 10, life: 200 });
+}
+
+function applyPowerUp(kind, x, y) {
+  if (kind === 'emp') {
+    const blastRadius = 110;
+    game.drones = game.drones.filter((drone) => {
+      const hit = Math.hypot(drone.x - x, drone.y - y) < blastRadius;
+      if (hit) {
+        game.score += 1;
+        game.explosions.push({ x: drone.x, y: drone.y, life: 24, color: '#f97316' });
+      }
+      return !hit;
+    });
+    game.explosions.push({ x, y, life: 36, color: '#67e8f9', radius: blastRadius });
+    beep(190, 0.2, 0.06, 'square');
   }
 
-  return jd;
-}
-
-function getNewMoonDay(k, timeZone) {
-  const T = k / 1236.85;
-  const T2 = T * T;
-  const T3 = T2 * T;
-  const dr = Math.PI / 180;
-
-  const jd1 =
-    2415020.75933 +
-    29.53058868 * k +
-    0.0001178 * T2 -
-    0.000000155 * T3 +
-    0.00033 * Math.sin((166.56 + 132.87 * T - 0.009173 * T2) * dr);
-
-  const M = 359.2242 + 29.10535608 * k - 0.0000333 * T2 - 0.00000347 * T3;
-  const Mpr = 306.0253 + 385.81691806 * k + 0.0107306 * T2 + 0.00001236 * T3;
-  const F = 21.2964 + 390.67050646 * k - 0.0016528 * T2 - 0.00000239 * T3;
-
-  const c1 =
-    (0.1734 - 0.000393 * T) * Math.sin(M * dr) +
-    0.0021 * Math.sin(2 * dr * M) -
-    0.4068 * Math.sin(Mpr * dr) +
-    0.0161 * Math.sin(dr * 2 * Mpr) -
-    0.0004 * Math.sin(dr * 3 * Mpr) +
-    0.0104 * Math.sin(dr * 2 * F) -
-    0.0051 * Math.sin(dr * (M + Mpr)) -
-    0.0074 * Math.sin(dr * (M - Mpr)) +
-    0.0004 * Math.sin(dr * (2 * F + M)) -
-    0.0004 * Math.sin(dr * (2 * F - M)) -
-    0.0006 * Math.sin(dr * (2 * F + Mpr)) +
-    0.001 * Math.sin(dr * (2 * F - Mpr)) +
-    0.0005 * Math.sin(dr * (2 * Mpr + M));
-
-  const deltaT = T < -11 ? 0.001 + 0.000839 * T + 0.0002261 * T2 - 0.00000845 * T3 - 0.000000081 * T * T3 : -0.000278 + 0.000265 * T + 0.000262 * T2;
-
-  const jdNew = jd1 + c1 - deltaT;
-  return int(jdNew + 0.5 + timeZone / 24);
-}
-
-function getSunLongitude(jdn, timeZone) {
-  const T = (jdn - 2451545.5 - timeZone / 24) / 36525;
-  const T2 = T * T;
-  const dr = Math.PI / 180;
-  const M = 357.5291 + 35999.0503 * T - 0.0001559 * T2 - 0.00000048 * T * T2;
-  const L0 = 280.46645 + 36000.76983 * T + 0.0003032 * T2;
-  const dl =
-    (1.9146 - 0.004817 * T - 0.000014 * T2) * Math.sin(dr * M) +
-    (0.019993 - 0.000101 * T) * Math.sin(dr * 2 * M) +
-    0.00029 * Math.sin(dr * 3 * M);
-
-  let L = (L0 + dl) * dr;
-  L = L - Math.PI * 2 * int(L / (Math.PI * 2));
-  return int((L / Math.PI) * 6);
-}
-
-function getLunarMonth11(yy, timeZone) {
-  const off = jdFromDate(31, 12, yy) - 2415021;
-  const k = int(off / 29.530588853);
-  let nm = getNewMoonDay(k, timeZone);
-  if (getSunLongitude(nm, timeZone) >= 9) {
-    nm = getNewMoonDay(k - 1, timeZone);
-  }
-  return nm;
-}
-
-function getLeapMonthOffset(a11, timeZone) {
-  const k = int((a11 - 2415021.076998695) / 29.530588853 + 0.5);
-  let i = 1;
-  let last;
-  let arc = getSunLongitude(getNewMoonDay(k + i, timeZone), timeZone);
-  do {
-    last = arc;
-    i += 1;
-    arc = getSunLongitude(getNewMoonDay(k + i, timeZone), timeZone);
-  } while (arc !== last && i < 15);
-  return i - 1;
-}
-
-function convertSolarToLunar(dd, mm, yy, timeZone = 7) {
-  const dayNumber = jdFromDate(dd, mm, yy);
-  const k = int((dayNumber - 2415021.076998695) / 29.530588853);
-  let monthStart = getNewMoonDay(k + 1, timeZone);
-
-  if (monthStart > dayNumber) {
-    monthStart = getNewMoonDay(k, timeZone);
+  if (kind === 'slow') {
+    game.slowUntil = performance.now() + 3000;
+    beep(220, 0.15, 0.06);
   }
 
-  let a11 = getLunarMonth11(yy, timeZone);
-  let b11 = a11;
-  let lunarYear;
-
-  if (a11 >= monthStart) {
-    lunarYear = yy;
-    a11 = getLunarMonth11(yy - 1, timeZone);
-  } else {
-    lunarYear = yy + 1;
-    b11 = getLunarMonth11(yy + 1, timeZone);
+  if (kind === 'auto') {
+    game.autoUntil = performance.now() + 5000;
+    beep(780, 0.18, 0.06);
   }
 
-  const lunarDay = dayNumber - monthStart + 1;
-  const diff = int((monthStart - a11) / 29);
-  let lunarLeap = 0;
-  let lunarMonth = diff + 11;
+  if (kind === 'repair') {
+    game.health = Math.min(100, game.health + 18);
+    beep(420, 0.2, 0.06);
+  }
+}
 
-  if (b11 - a11 > 365) {
-    const leapMonthDiff = getLeapMonthOffset(a11, timeZone);
-    if (diff >= leapMonthDiff) {
-      lunarMonth = diff + 10;
-      if (diff === leapMonthDiff) {
-        lunarLeap = 1;
+function getDifficultyLevel() {
+  return Math.floor(game.score / 20) + 1;
+}
+
+function runAutoBattery(time) {
+  if (time > game.autoUntil) return;
+  if (time - game.lastAutoShot < 230) return;
+
+  let nearest = null;
+  let best = Infinity;
+  for (const drone of game.drones) {
+    const distance = Math.hypot(drone.x - game.baseX, drone.y - groundY);
+    if (distance < best) {
+      best = distance;
+      nearest = drone;
+    }
+  }
+
+  if (nearest) {
+    fireInterceptor(nearest.x, nearest.y);
+    game.lastAutoShot = time;
+  }
+}
+
+function updateEntities(time) {
+  game.level = getDifficultyLevel();
+  game.spawnGap = Math.max(360, 1200 - (game.level - 1) * 75);
+
+  if (time - game.lastSpawn > game.spawnGap) {
+    createDrone();
+    game.lastSpawn = time;
+  }
+
+  runAutoBattery(time);
+
+  const slowFactor = time < game.slowUntil ? 0.4 : 1;
+
+  for (const drone of game.drones) {
+    drone.y += drone.speed * slowFactor;
+  }
+
+  for (const interceptor of game.interceptors) {
+    interceptor.x += interceptor.vx;
+    interceptor.y += interceptor.vy;
+    interceptor.life -= 1;
+  }
+
+  for (const boom of game.explosions) {
+    boom.life -= 1;
+  }
+
+  for (const power of game.powerUps) {
+    power.life -= 1;
+  }
+
+  // Interceptor vs drone
+  for (let i = game.interceptors.length - 1; i >= 0; i -= 1) {
+    const shot = game.interceptors[i];
+
+    for (let j = game.drones.length - 1; j >= 0; j -= 1) {
+      const drone = game.drones[j];
+      const dist = Math.hypot(shot.x - drone.x, shot.y - drone.y);
+
+      if (dist < shot.radius + drone.size * 0.8) {
+        game.interceptors.splice(i, 1);
+        game.drones.splice(j, 1);
+        game.explosions.push({ x: drone.x, y: drone.y, life: 20, color: '#facc15' });
+        game.score += 1;
+        beep(860, 0.07, 0.05, 'sawtooth');
+
+        if (Math.random() < 0.14) {
+          spawnPowerUp(drone.x, drone.y);
+        }
+        break;
       }
     }
   }
 
-  if (lunarMonth > 12) lunarMonth -= 12;
-  if (lunarMonth >= 11 && diff < 4) lunarYear -= 1;
+  // Reaching city
+  for (let i = game.drones.length - 1; i >= 0; i -= 1) {
+    if (game.drones[i].y > groundY - 8) {
+      game.drones.splice(i, 1);
+      game.health -= 10;
+      game.explosions.push({ x: random(90, canvas.width - 90), y: groundY + 4, life: 24, color: '#fb7185' });
+      beep(120, 0.18, 0.08, 'square');
+    }
+  }
 
-  return { lunarDay, lunarMonth, lunarYear, lunarLeap, dayNumber };
+  // Pickup power-up by shooting it
+  for (let p = game.powerUps.length - 1; p >= 0; p -= 1) {
+    const power = game.powerUps[p];
+    for (let i = game.interceptors.length - 1; i >= 0; i -= 1) {
+      const shot = game.interceptors[i];
+      if (Math.hypot(shot.x - power.x, shot.y - power.y) < 13) {
+        game.interceptors.splice(i, 1);
+        applyPowerUp(power.kind, power.x, power.y);
+        game.powerUps.splice(p, 1);
+        break;
+      }
+    }
+  }
+
+  game.interceptors = game.interceptors.filter(
+    (shot) => shot.life > 0 && shot.y > -20 && shot.x > -20 && shot.x < canvas.width + 20,
+  );
+  game.explosions = game.explosions.filter((boom) => boom.life > 0);
+  game.powerUps = game.powerUps.filter((power) => power.life > 0);
+
+  if (game.health <= 0) {
+    endGame();
+  }
 }
 
-const CAN = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
-const CHI = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
+function drawCity() {
+  ctx.fillStyle = '#111827';
+  ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
 
-function canChiYear(year) {
-  return `${CAN[(year + 6) % 10]} ${CHI[(year + 8) % 12]}`;
+  ctx.fillStyle = '#334155';
+  const buildings = [
+    { x: 80, w: 70, h: 95 },
+    { x: 190, w: 110, h: 70 },
+    { x: 360, w: 90, h: 120 },
+    { x: 510, w: 80, h: 80 },
+    { x: 650, w: 120, h: 105 },
+  ];
+
+  for (const b of buildings) {
+    ctx.fillRect(b.x, groundY - b.h, b.w, b.h);
+  }
+
+  ctx.fillStyle = '#38bdf8';
+  ctx.beginPath();
+  ctx.moveTo(game.baseX - 18, groundY);
+  ctx.lineTo(game.baseX, groundY - 20);
+  ctx.lineTo(game.baseX + 18, groundY);
+  ctx.closePath();
+  ctx.fill();
 }
 
-function canChiDay(jd) {
-  return `${CAN[(jd + 9) % 10]} ${CHI[(jd + 1) % 12]}`;
+function drawDrone(drone) {
+  ctx.fillStyle = '#f43f5e';
+  ctx.beginPath();
+  ctx.moveTo(drone.x, drone.y - drone.size);
+  ctx.lineTo(drone.x - drone.size, drone.y + drone.size * 0.5);
+  ctx.lineTo(drone.x + drone.size, drone.y + drone.size * 0.5);
+  ctx.closePath();
+  ctx.fill();
 }
 
-const goodHourByDayChi = {
-  Tý: ['Tý', 'Sửu', 'Mão', 'Ngọ', 'Thân', 'Dậu'],
-  Sửu: ['Dần', 'Mão', 'Tỵ', 'Thân', 'Tuất', 'Hợi'],
-  Dần: ['Tý', 'Sửu', 'Thìn', 'Tỵ', 'Mùi', 'Tuất'],
-  Mão: ['Tý', 'Dần', 'Mão', 'Ngọ', 'Mùi', 'Dậu'],
-  Thìn: ['Dần', 'Thìn', 'Tỵ', 'Thân', 'Dậu', 'Hợi'],
-  Tỵ: ['Sửu', 'Thìn', 'Ngọ', 'Mùi', 'Tuất', 'Hợi'],
-  Ngọ: ['Tý', 'Sửu', 'Mão', 'Ngọ', 'Thân', 'Dậu'],
-  Mùi: ['Dần', 'Mão', 'Tỵ', 'Thân', 'Tuất', 'Hợi'],
-  Thân: ['Tý', 'Sửu', 'Thìn', 'Tỵ', 'Mùi', 'Tuất'],
-  Dậu: ['Tý', 'Dần', 'Mão', 'Ngọ', 'Mùi', 'Dậu'],
-  Tuất: ['Dần', 'Thìn', 'Tỵ', 'Thân', 'Dậu', 'Hợi'],
-  Hợi: ['Sửu', 'Thìn', 'Ngọ', 'Mùi', 'Tuất', 'Hợi'],
-};
-
-function formatBranchHours(branch) {
-  const ranges = {
-    Tý: '23:00-00:59',
-    Sửu: '01:00-02:59',
-    Dần: '03:00-04:59',
-    Mão: '05:00-06:59',
-    Thìn: '07:00-08:59',
-    Tỵ: '09:00-10:59',
-    Ngọ: '11:00-12:59',
-    Mùi: '13:00-14:59',
-    Thân: '15:00-16:59',
-    Dậu: '17:00-18:59',
-    Tuất: '19:00-20:59',
-    Hợi: '21:00-22:59',
+function drawPowerUp(power) {
+  const styles = {
+    emp: { color: '#67e8f9', label: 'E' },
+    slow: { color: '#a78bfa', label: 'S' },
+    auto: { color: '#f59e0b', label: 'A' },
+    repair: { color: '#4ade80', label: 'R' },
   };
-  return `${branch} (${ranges[branch]})`;
+  const style = styles[power.kind];
+
+  ctx.fillStyle = style.color;
+  ctx.beginPath();
+  ctx.arc(power.x, power.y, power.radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 12px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText(style.label, power.x, power.y + 4);
 }
 
-function getBranchFromYear(year) {
-  return CHI[(year + 8) % 12];
+function draw(time) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const sky = ctx.createLinearGradient(0, 0, 0, groundY);
+  sky.addColorStop(0, '#0b1228');
+  sky.addColorStop(1, '#1d4ed8');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, canvas.width, groundY);
+
+  if (time < game.slowUntil) {
+    ctx.fillStyle = 'rgba(167, 139, 250, 0.15)';
+    ctx.fillRect(0, 0, canvas.width, groundY);
+  }
+
+  drawCity();
+
+  for (const drone of game.drones) drawDrone(drone);
+
+  ctx.fillStyle = '#f8fafc';
+  for (const shot of game.interceptors) {
+    ctx.beginPath();
+    ctx.arc(shot.x, shot.y, shot.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  for (const boom of game.explosions) {
+    const alpha = boom.life / 36;
+    ctx.globalAlpha = Math.max(alpha, 0.12);
+    ctx.strokeStyle = boom.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(boom.x, boom.y, boom.radius || (36 - boom.life), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  for (const power of game.powerUps) drawPowerUp(power);
+
+  if (time < game.autoUntil) {
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 14px system-ui';
+    ctx.fillText('Auto Battery Active', 20, 24);
+  }
 }
 
-function compatibilityScore(yearA, yearB) {
-  const branchA = getBranchFromYear(yearA);
-  const branchB = getBranchFromYear(yearB);
-
-  const tamHopGroups = [
-    ['Thân', 'Tý', 'Thìn'],
-    ['Dần', 'Ngọ', 'Tuất'],
-    ['Hợi', 'Mão', 'Mùi'],
-    ['Tỵ', 'Dậu', 'Sửu'],
-  ];
-
-  const xungPairs = [
-    ['Tý', 'Ngọ'],
-    ['Sửu', 'Mùi'],
-    ['Dần', 'Thân'],
-    ['Mão', 'Dậu'],
-    ['Thìn', 'Tuất'],
-    ['Tỵ', 'Hợi'],
-  ];
-
-  if (branchA === branchB) {
-    return { level: 'Khá hợp', detail: `Đồng tuổi chi (${branchA}), dễ đồng điệu nhưng cần tránh bảo thủ.` };
-  }
-
-  if (tamHopGroups.some((group) => group.includes(branchA) && group.includes(branchB))) {
-    return { level: 'Rất hợp', detail: `${branchA} và ${branchB} thuộc nhóm tam hợp.` };
-  }
-
-  if (xungPairs.some((pair) => pair.includes(branchA) && pair.includes(branchB))) {
-    return { level: 'Cần cân nhắc', detail: `${branchA} và ${branchB} thuộc cặp xung trực tiếp.` };
-  }
-
-  return { level: 'Trung bình', detail: `${branchA} và ${branchB} không xung trực diện, cần xét thêm mệnh/ngũ hành.` };
+function loop(time) {
+  if (!game.running) return;
+  updateEntities(time);
+  draw(time);
+  updateHUD();
+  requestAnimationFrame(loop);
 }
 
-function zodiacFromDate(date) {
-  const m = date.getMonth() + 1;
-  const d = date.getDate();
-  const signs = [
-    ['Ma Kết', 1, 19],
-    ['Bảo Bình', 2, 18],
-    ['Song Ngư', 3, 20],
-    ['Bạch Dương', 4, 19],
-    ['Kim Ngưu', 5, 20],
-    ['Song Tử', 6, 20],
-    ['Cự Giải', 7, 22],
-    ['Sư Tử', 8, 22],
-    ['Xử Nữ', 9, 22],
-    ['Thiên Bình', 10, 22],
-    ['Bọ Cạp', 11, 21],
-    ['Nhân Mã', 12, 21],
-    ['Ma Kết', 12, 31],
-  ];
+function startGame() {
+  game.running = true;
+  game.score = 0;
+  game.health = 100;
+  game.level = 1;
+  game.drones = [];
+  game.interceptors = [];
+  game.explosions = [];
+  game.powerUps = [];
+  game.lastSpawn = 0;
+  game.lastAutoShot = 0;
+  game.slowUntil = 0;
+  game.autoUntil = 0;
 
-  for (let i = 0; i < signs.length; i += 1) {
-    const [name, month, day] = signs[i];
-    if (m < month || (m === month && d <= day)) return name;
-  }
-  return 'Ma Kết';
+  startScreen.classList.remove('visible');
+  gameOverScreen.classList.remove('visible');
+  updateHUD();
+  requestAnimationFrame(loop);
 }
 
-function dailyAdvice(seed) {
-  const tips = [
-    'Hôm nay thích hợp hoàn thành việc tồn đọng.',
-    'Bạn nên ưu tiên đối thoại nhẹ nhàng trong các mối quan hệ.',
-    'Tài chính ổn định, tránh quyết định chi tiêu bốc đồng.',
-    'Năng lượng tốt cho việc học tập và phát triển kỹ năng mới.',
-    'Nên dành thời gian nghỉ ngơi để giữ cân bằng tinh thần.',
-  ];
-  return tips[seed % tips.length];
-}
-
-const form = document.getElementById('convert-form');
-const dateInput = document.getElementById('solar-date');
-const timezoneInput = document.getElementById('timezone');
-const resultEl = document.getElementById('result');
-
-const compatibilityForm = document.getElementById('compatibility-form');
-const yearAInput = document.getElementById('year-a');
-const yearBInput = document.getElementById('year-b');
-const compatibilityResult = document.getElementById('compatibility-result');
-
-const goodHoursForm = document.getElementById('good-hours-form');
-const goodHoursDate = document.getElementById('good-hours-date');
-const goodHoursResult = document.getElementById('good-hours-result');
-
-const noteForm = document.getElementById('note-form');
-const noteLunarInput = document.getElementById('note-lunar');
-const noteTextInput = document.getElementById('note-text');
-const noteList = document.getElementById('note-list');
-
-const zodiacForm = document.getElementById('zodiac-form');
-const zodiacDate = document.getElementById('zodiac-date');
-const zodiacResult = document.getElementById('zodiac-result');
-
-function renderNotes() {
-  const notes = JSON.parse(localStorage.getItem('lunarNotes') || '[]');
-  if (!notes.length) {
-    noteList.innerHTML = 'Chưa có ghi chú nào.';
-    return;
+function endGame() {
+  game.running = false;
+  if (game.score > game.highScore) {
+    game.highScore = game.score;
+    localStorage.setItem('skyShieldHighScore', String(game.highScore));
   }
 
-  noteList.innerHTML = notes
-    .map((n, i) => `<div class="note-item"><span><strong>${n.lunar}</strong>: ${n.text}</span><button data-index="${i}" class="delete-note">Xóa</button></div>`)
-    .join('');
+  finalScoreEl.textContent = game.score;
+  finalHighScoreEl.textContent = game.highScore;
+  highScoreEl.textContent = game.highScore;
+  gameOverScreen.classList.add('visible');
 }
 
-document.addEventListener('click', (event) => {
-  const target = event.target;
-  if (target.classList.contains('delete-note')) {
-    const notes = JSON.parse(localStorage.getItem('lunarNotes') || '[]');
-    notes.splice(Number(target.dataset.index), 1);
-    localStorage.setItem('lunarNotes', JSON.stringify(notes));
-    renderNotes();
-  }
-});
+function pointerToCanvas(event) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = event.clientX ?? event.touches?.[0]?.clientX;
+  const clientY = event.clientY ?? event.touches?.[0]?.clientY;
 
-const today = new Date();
-dateInput.valueAsDate = today;
-goodHoursDate.valueAsDate = today;
-zodiacDate.valueAsDate = today;
+  return {
+    x: ((clientX - rect.left) / rect.width) * canvas.width,
+    y: ((clientY - rect.top) / rect.height) * canvas.height,
+  };
+}
 
-form.addEventListener('submit', (event) => {
+function onFire(event) {
+  if (!game.running) return;
   event.preventDefault();
-  if (!dateInput.value) return;
+  const point = pointerToCanvas(event);
+  fireInterceptor(point.x, point.y);
+}
 
-  const [yyyy, mm, dd] = dateInput.value.split('-').map(Number);
-  const tz = Number(timezoneInput.value);
-  const lunar = convertSolarToLunar(dd, mm, yyyy, tz);
-
-  resultEl.innerHTML = `
-    <strong>Kết quả:</strong><br />
-    Dương lịch: ${dd}/${mm}/${yyyy}<br />
-    Âm lịch: <strong>${lunar.lunarDay}/${lunar.lunarMonth}/${lunar.lunarYear}${lunar.lunarLeap ? ' (nhuận)' : ''}</strong><br />
-    Năm âm lịch: ${canChiYear(lunar.lunarYear)}<br />
-    Ngày Can Chi: ${canChiDay(lunar.dayNumber)}
-  `;
+startBtn.addEventListener('click', () => {
+  audioCtx.resume();
+  startGame();
 });
 
-compatibilityForm.addEventListener('submit', (event) => {
-  event.preventDefault();
-  const yearA = Number(yearAInput.value);
-  const yearB = Number(yearBInput.value);
-  if (!yearA || !yearB) return;
-
-  const score = compatibilityScore(yearA, yearB);
-  compatibilityResult.innerHTML = `
-    Tuổi A: ${yearA} (${canChiYear(yearA)})<br />
-    Tuổi B: ${yearB} (${canChiYear(yearB)})<br />
-    <strong>Mức độ: ${score.level}</strong><br />
-    Gợi ý: ${score.detail}
-  `;
+restartBtn.addEventListener('click', () => {
+  audioCtx.resume();
+  startGame();
 });
 
-goodHoursForm.addEventListener('submit', (event) => {
-  event.preventDefault();
-  if (!goodHoursDate.value) return;
-
-  const [yyyy, mm, dd] = goodHoursDate.value.split('-').map(Number);
-  const jd = jdFromDate(dd, mm, yyyy);
-  const dayChi = CHI[(jd + 1) % 12];
-  const hours = goodHourByDayChi[dayChi].map(formatBranchHours).join(', ');
-  goodHoursResult.innerHTML = `Ngày ${dd}/${mm}/${yyyy} (${dayChi}) có giờ hoàng đạo: <strong>${hours}</strong>`;
+soundToggle.addEventListener('click', () => {
+  game.soundOn = !game.soundOn;
+  soundToggle.textContent = game.soundOn ? '🔊 Sound: ON' : '🔇 Sound: OFF';
 });
 
-noteForm.addEventListener('submit', (event) => {
-  event.preventDefault();
-  const lunar = noteLunarInput.value.trim();
-  const text = noteTextInput.value.trim();
-  if (!lunar || !text) return;
+canvas.addEventListener('click', onFire);
+canvas.addEventListener('touchstart', onFire, { passive: false });
 
-  const notes = JSON.parse(localStorage.getItem('lunarNotes') || '[]');
-  notes.push({ lunar, text });
-  localStorage.setItem('lunarNotes', JSON.stringify(notes));
-
-  noteLunarInput.value = '';
-  noteTextInput.value = '';
-  renderNotes();
-});
-
-zodiacForm.addEventListener('submit', (event) => {
-  event.preventDefault();
-  if (!zodiacDate.value) return;
-
-  const date = new Date(zodiacDate.value);
-  const sign = zodiacFromDate(date);
-  const seed = date.getFullYear() + date.getMonth() * 31 + date.getDate();
-  zodiacResult.innerHTML = `<strong>${sign}</strong>: ${dailyAdvice(seed)}`;
-});
-
-renderNotes();
-form.dispatchEvent(new Event('submit'));
+draw(0);
+updateHUD();
