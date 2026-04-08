@@ -1,70 +1,40 @@
-# Sky Shield
+# Zodiac Glow ✨
 
-Sky Shield is a simple browser defense game built with plain **HTML, CSS, and JavaScript**.
+Premium bilingual (Vietnamese/English) astrology web app built with Next.js + TypeScript + Tailwind.
 
-## Game features
-
-- Defend a city from waves of triangular drones.
-- Click/tap to launch interceptors toward your selected point.
-- City health drops when drones reach the buildings.
-- Score increases for each intercepted drone.
-- Difficulty increases every 20 points.
-- Four power-ups:
-  - **EMP Burst**: clears nearby drones.
-  - **Radar Slow**: slows enemies for 3 seconds.
-  - **Auto Battery**: auto-fires for 5 seconds.
-  - **Repair Kit**: restores city health.
-- Start screen + game over screen + restart button.
-- Local high score with `localStorage`.
-- Mobile-friendly tap controls.
-- Clean minimalist visuals.
-- Simple sound toggle.
-
-## Project files
-
-- `index.html` – game layout and UI panels.
-- `style.css` – responsive minimalist styles.
-- `script.js` – game logic, drawing, collisions, power-ups, scoring.
-- `README.md` – setup + deployment guide.
-
-## How to run locally
-
-### Option 1 (quickest)
-1. Download or clone this project.
-2. Open `index.html` in your browser.
-
-### Option 2 (recommended local server)
-Use a small server so browser behavior matches production:
+## Run locally
 
 ```bash
-# If you have Python installed
-python3 -m http.server 8080
+npm install
+npm run dev
 ```
 
-Then open:
+Open http://localhost:3000
 
-- `http://localhost:8080`
+## Build
 
-## How to deploy to Netlify
+```bash
+npm run build
+npm run start
+```
 
-### Deploy with drag-and-drop (easiest)
-1. Go to [https://app.netlify.com/drop](https://app.netlify.com/drop).
-2. Drag your project folder (or zipped folder contents) into the page.
-3. Netlify will publish it and give you a live URL.
+## Project structure
 
-### Deploy from Git (recommended)
-1. Push this project to GitHub/GitLab/Bitbucket.
-2. In Netlify, click **Add new site** → **Import an existing project**.
-3. Connect your repository.
-4. Build settings for this project:
-   - **Build command**: *(leave empty)*
-   - **Publish directory**: `.`
-5. Click **Deploy site**.
+- `app/` – Next.js routes and page layouts.
+- `components/` – reusable UI components (cards, navbar, footer, providers, toasts).
+- `data/zodiacData.ts` – all 12 sign mock content, horoscope, quotes, compatibility logic.
+- `data/translations.ts` – UI text for Vietnamese + English.
+- `hooks/useLocalStorage.ts` – localStorage persistence for locale and favorites.
+- `lib/utils.ts` – helper logic (birthday → zodiac sign).
+- `types/index.ts` – shared TypeScript models.
+- `app/globals.css` – design tokens, cosmic background, glassmorphism utilities.
 
-Because this is a static site, no build step is required.
+## Non-coder edit guide
 
-## Tips for customization
-
-- Change colors in `style.css` root variables.
-- Tune difficulty in `script.js` by editing `spawnGap`, drone speed, and level math.
-- Adjust power-up drop chance by changing `Math.random() < 0.14`.
+- Colors and cosmic style: `tailwind.config.ts`, `app/globals.css`
+- Zodiac content: `data/zodiacData.ts`
+- Vietnamese UI text: `data/translations.ts` (`vi` section)
+- English UI text: `data/translations.ts` (`en` section)
+- Quotes and share text: `data/zodiacData.ts` (`quotes`, `signatureQuote`, `dailyHoroscope.quote`)
+- Lucky numbers/colors: `data/zodiacData.ts` (`luckyNumbers`, `luckyColors`, `dailyHoroscope.luckyColor`)
+- Share card format: `components/Cards.tsx` (`ShareCard`)
