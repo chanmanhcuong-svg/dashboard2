@@ -16,6 +16,46 @@ const soundToggle = document.getElementById('sound-toggle');
 
 const groundY = canvas.height - 65;
 
+// Art direction controls:
+// 1) Sky/background colors (topSky, bottomSky, slowOverlay)
+// 2) Building drawing colors and silhouette (ground, buildingFaces, roofCap)
+// 3) Square window appearance and density (windowSize, windowGapX, windowGapY, windowChance)
+// 4) Drone shape proportions (bodyWidth, bodyHeight, sensorWidth, sensorHeight)
+// 5) Drone 3D shading (droneLight, droneMid, droneDark, droneBevel)
+const ART = {
+  sky: {
+    topSky: '#d9b487',
+    bottomSky: '#9f6f4b',
+    slowOverlay: 'rgba(166, 115, 86, 0.16)',
+  },
+  city: {
+    ground: '#2a1f1a',
+    buildingFaces: ['#6f5646', '#5f4a3d', '#7d6452', '#4f3e33', '#665245'],
+    roofCap: '#8a6d57',
+    windowLight: '#9f866f',
+    windowDark: '#5a483b',
+    windowSize: 4,
+    windowGapX: 8,
+    windowGapY: 10,
+    windowChance: 0.72,
+  },
+  drones: {
+    droneLight: '#cb7a58',
+    droneMid: '#ad6548',
+    droneDark: '#7f4530',
+    droneBevel: 'rgba(244, 212, 182, 0.35)',
+    sensorColor: '#5f3424',
+    bodyWidth: 1.05,
+    bodyHeight: 0.95,
+    sensorWidth: 0.42,
+    sensorHeight: 0.32,
+  },
+  base: {
+    color: '#9f5f44',
+    shadow: '#65392b',
+  },
+};
+
 const game = {
   running: false,
   score: 0,
@@ -34,6 +74,34 @@ const game = {
   baseX: canvas.width / 2,
   highScore: Number(localStorage.getItem('skyShieldHighScore') || 0),
 };
+
+function buildCityLayout() {
+  const baseBuildings = [
+    { x: 80, w: 70, h: 95 },
+    { x: 190, w: 110, h: 70 },
+    { x: 360, w: 90, h: 120 },
+    { x: 510, w: 80, h: 80 },
+    { x: 650, w: 120, h: 105 },
+  ];
+
+  return baseBuildings.map((b) => {
+    const windows = [];
+    for (let wx = b.x + 6; wx < b.x + b.w - 6; wx += ART.city.windowGapX) {
+      for (let wy = groundY - b.h + 8; wy < groundY - 8; wy += ART.city.windowGapY) {
+        if (Math.random() < ART.city.windowChance) {
+          windows.push({
+            x: wx,
+            y: wy,
+            tone: Math.random() < 0.45 ? ART.city.windowDark : ART.city.windowLight,
+          });
+        }
+      }
+    }
+    return { ...b, windows };
+  });
+}
+
+const cityLayout = buildCityLayout();
 
 highScoreEl.textContent = game.highScore;
 
@@ -244,38 +312,96 @@ function updateEntities(time) {
 }
 
 function drawCity() {
-  ctx.fillStyle = '#111827';
+  // Ground strip in dark earth tone.
+  ctx.fillStyle = ART.city.ground;
   ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
 
-  ctx.fillStyle = '#334155';
-  const buildings = [
-    { x: 80, w: 70, h: 95 },
-    { x: 190, w: 110, h: 70 },
-    { x: 360, w: 90, h: 120 },
-    { x: 510, w: 80, h: 80 },
-    { x: 650, w: 120, h: 105 },
-  ];
-
-  for (const b of buildings) {
+  // Warm, stylized city blocks.
+  cityLayout.forEach((b, index) => {
+    const face = ART.city.buildingFaces[index % ART.city.buildingFaces.length];
+    ctx.fillStyle = face;
     ctx.fillRect(b.x, groundY - b.h, b.w, b.h);
-  }
 
-  ctx.fillStyle = '#38bdf8';
+    // Simple roof cap for depth while staying minimalist.
+    ctx.fillStyle = ART.city.roofCap;
+    ctx.fillRect(b.x, groundY - b.h, b.w, 3);
+
+    // Subtle square windows. Some appear dark/light for a realistic look.
+    for (const win of b.windows) {
+      ctx.fillStyle = win.tone;
+      ctx.fillRect(win.x, win.y, ART.city.windowSize, ART.city.windowSize);
+    }
+  });
+
+  // Launcher icon updated to clay colors.
+  ctx.fillStyle = ART.base.color;
   ctx.beginPath();
   ctx.moveTo(game.baseX - 18, groundY);
   ctx.lineTo(game.baseX, groundY - 20);
   ctx.lineTo(game.baseX + 18, groundY);
   ctx.closePath();
   ctx.fill();
+
+  ctx.strokeStyle = ART.base.shadow;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(game.baseX - 10, groundY - 4);
+  ctx.lineTo(game.baseX, groundY - 16);
+  ctx.lineTo(game.baseX + 10, groundY - 4);
+  ctx.stroke();
 }
 
 function drawDrone(drone) {
-  ctx.fillStyle = '#f43f5e';
+  const bodyHalf = drone.size * ART.drones.bodyWidth;
+  const bodyHeight = drone.size * ART.drones.bodyHeight;
+
+  // Main drone body: upside-down triangle.
+  const topLeft = { x: drone.x - bodyHalf, y: drone.y - bodyHeight * 0.7 };
+  const topRight = { x: drone.x + bodyHalf, y: drone.y - bodyHeight * 0.7 };
+  const bottom = { x: drone.x, y: drone.y + bodyHeight };
+
+  // 3D feel with a soft vertical gradient.
+  const droneGrad = ctx.createLinearGradient(drone.x, topLeft.y, drone.x, bottom.y);
+  droneGrad.addColorStop(0, ART.drones.droneLight);
+  droneGrad.addColorStop(0.55, ART.drones.droneMid);
+  droneGrad.addColorStop(1, ART.drones.droneDark);
+
+  ctx.fillStyle = droneGrad;
   ctx.beginPath();
-  ctx.moveTo(drone.x, drone.y - drone.size);
-  ctx.lineTo(drone.x - drone.size, drone.y + drone.size * 0.5);
-  ctx.lineTo(drone.x + drone.size, drone.y + drone.size * 0.5);
+  ctx.moveTo(topLeft.x, topLeft.y);
+  ctx.lineTo(topRight.x, topRight.y);
+  ctx.lineTo(bottom.x, bottom.y);
   ctx.closePath();
+  ctx.fill();
+
+  // Side shadow face to increase readable depth at small sizes.
+  ctx.fillStyle = ART.drones.droneDark;
+  ctx.globalAlpha = 0.32;
+  ctx.beginPath();
+  ctx.moveTo(drone.x, topLeft.y + 1);
+  ctx.lineTo(topRight.x, topRight.y);
+  ctx.lineTo(bottom.x, bottom.y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Tiny bevel/highlight edge.
+  ctx.strokeStyle = ART.drones.droneBevel;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(topLeft.x + 1, topLeft.y + 1);
+  ctx.lineTo(drone.x, bottom.y - 2);
+  ctx.stroke();
+
+  // Small rounded sensor bar attached to lower point.
+  const sensorW = drone.size * ART.drones.sensorWidth;
+  const sensorH = drone.size * ART.drones.sensorHeight;
+  const sensorX = drone.x - sensorW / 2;
+  const sensorY = bottom.y - 1;
+  const radius = Math.min(sensorH / 2, sensorW / 4);
+  ctx.fillStyle = ART.drones.sensorColor;
+  ctx.beginPath();
+  ctx.roundRect(sensorX, sensorY, sensorW, sensorH, radius);
   ctx.fill();
 }
 
@@ -303,13 +429,13 @@ function draw(time) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const sky = ctx.createLinearGradient(0, 0, 0, groundY);
-  sky.addColorStop(0, '#0b1228');
-  sky.addColorStop(1, '#1d4ed8');
+  sky.addColorStop(0, ART.sky.topSky);
+  sky.addColorStop(1, ART.sky.bottomSky);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, canvas.width, groundY);
 
   if (time < game.slowUntil) {
-    ctx.fillStyle = 'rgba(167, 139, 250, 0.15)';
+    ctx.fillStyle = ART.sky.slowOverlay;
     ctx.fillRect(0, 0, canvas.width, groundY);
   }
 
