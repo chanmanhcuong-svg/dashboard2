@@ -3,51 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sky Shield</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>Zodiac Glow</title>
   </head>
   <body>
-    <main class="app">
-      <header class="hud">
-        <h1>Sky Shield</h1>
-        <div class="hud-stats">
-          <p>Score: <span id="score">0</span></p>
-          <p>Health: <span id="health">100</span></p>
-          <p>Level: <span id="level">1</span></p>
-          <p>High Score: <span id="high-score">0</span></p>
-        </div>
-        <button id="sound-toggle" class="mini-btn" type="button" aria-label="Toggle sound">🔊 Sound: ON</button>
-      </header>
-
-      <section class="game-shell">
-        <canvas id="game-canvas" width="900" height="550" aria-label="Sky Shield game"></canvas>
-
-        <section id="start-screen" class="overlay visible" aria-live="polite">
-          <h2>Defend the City</h2>
-          <p>Tap/click anywhere to fire an interceptor.</p>
-          <p>Destroy triangle drones before they reach your buildings.</p>
-          <button id="start-btn" class="main-btn" type="button">Start Mission</button>
-        </section>
-
-        <section id="game-over-screen" class="overlay" aria-live="polite">
-          <h2>Game Over</h2>
-          <p>Your score: <span id="final-score">0</span></p>
-          <p>High score: <span id="final-high-score">0</span></p>
-          <button id="restart-btn" class="main-btn" type="button">Restart</button>
-        </section>
-      </section>
-
-      <section class="legend">
-        <h3>Power-Ups</h3>
-        <ul>
-          <li><strong>EMP Burst:</strong> clears nearby drones.</li>
-          <li><strong>Radar Slow:</strong> slows enemies for 3 seconds.</li>
-          <li><strong>Auto Battery:</strong> auto-fires for 5 seconds.</li>
-          <li><strong>Repair Kit:</strong> restores city health.</li>
-        </ul>
-      </section>
-    </main>
-
-    <script src="script.js"></script>
+    <p>This repository now runs Zodiac Glow via Next.js. Use <code>npm run dev</code>.</p>
   </body>
 </html>
