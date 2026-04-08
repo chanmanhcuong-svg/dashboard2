@@ -1,73 +1,50 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lịch Vạn Niên 2025 - Bản Web</title>
+    <title>Sky Shield</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <main class="container">
-      <h1>Lịch Vạn Niên 2025 (Bản Web)</h1>
-      <p class="description">
-        Bộ tiện ích lịch Việt theo phong cách Lịch Vạn Niên: đổi ngày Âm Dương, Can Chi, giờ hoàng đạo,
-        tuổi hợp và ghi chú ngày âm.
-      </p>
+    <main class="app">
+      <header class="hud">
+        <h1>Sky Shield</h1>
+        <div class="hud-stats">
+          <p>Score: <span id="score">0</span></p>
+          <p>Health: <span id="health">100</span></p>
+          <p>Level: <span id="level">1</span></p>
+          <p>High Score: <span id="high-score">0</span></p>
+        </div>
+        <button id="sound-toggle" class="mini-btn" type="button" aria-label="Toggle sound">🔊 Sound: ON</button>
+      </header>
 
-      <section class="panel">
-        <h2>1) Đổi ngày Dương lịch → Âm lịch</h2>
-        <form id="convert-form" class="form">
-          <label for="solar-date">Ngày dương lịch</label>
-          <input id="solar-date" name="solar-date" type="date" required />
+      <section class="game-shell">
+        <canvas id="game-canvas" width="900" height="550" aria-label="Sky Shield game"></canvas>
 
-          <label for="timezone">Múi giờ</label>
-          <select id="timezone" name="timezone">
-            <option value="7" selected>UTC+7 (Việt Nam)</option>
-            <option value="0">UTC+0</option>
-            <option value="8">UTC+8</option>
-          </select>
+        <section id="start-screen" class="overlay visible" aria-live="polite">
+          <h2>Defend the City</h2>
+          <p>Tap/click anywhere to fire an interceptor.</p>
+          <p>Destroy triangle drones before they reach your buildings.</p>
+          <button id="start-btn" class="main-btn" type="button">Start Mission</button>
+        </section>
 
-          <button type="submit">Chuyển đổi</button>
-        </form>
-        <section id="result" class="result" aria-live="polite"></section>
+        <section id="game-over-screen" class="overlay" aria-live="polite">
+          <h2>Game Over</h2>
+          <p>Your score: <span id="final-score">0</span></p>
+          <p>High score: <span id="final-high-score">0</span></p>
+          <button id="restart-btn" class="main-btn" type="button">Restart</button>
+        </section>
       </section>
 
-      <section class="panel">
-        <h2>2) Xem tuổi hợp (kết hôn / làm ăn)</h2>
-        <form id="compatibility-form" class="form inline-form">
-          <input id="year-a" type="number" min="1900" max="2100" placeholder="Năm sinh A" required />
-          <input id="year-b" type="number" min="1900" max="2100" placeholder="Năm sinh B" required />
-          <button type="submit">Xem hợp tuổi</button>
-        </form>
-        <section id="compatibility-result" class="result" aria-live="polite"></section>
-      </section>
-
-      <section class="panel">
-        <h2>3) Giờ hoàng đạo trong ngày</h2>
-        <form id="good-hours-form" class="form inline-form">
-          <input id="good-hours-date" type="date" required />
-          <button type="submit">Tra cứu giờ tốt</button>
-        </form>
-        <section id="good-hours-result" class="result" aria-live="polite"></section>
-      </section>
-
-      <section class="panel">
-        <h2>4) Ghi chú ngày âm (Rằm, Mồng Một, Giỗ...)</h2>
-        <form id="note-form" class="form inline-form">
-          <input id="note-lunar" type="text" placeholder="Ví dụ: 15/8" required />
-          <input id="note-text" type="text" placeholder="Nội dung ghi chú" required />
-          <button type="submit">Lưu ghi chú</button>
-        </form>
-        <section id="note-list" class="result" aria-live="polite"></section>
-      </section>
-
-      <section class="panel">
-        <h2>5) Tử vi nhanh 12 cung hoàng đạo</h2>
-        <form id="zodiac-form" class="form inline-form">
-          <input id="zodiac-date" type="date" required />
-          <button type="submit">Xem tử vi hôm nay</button>
-        </form>
-        <section id="zodiac-result" class="result" aria-live="polite"></section>
+      <section class="legend">
+        <h3>Power-Ups</h3>
+        <ul>
+          <li><strong>EMP Burst:</strong> clears nearby drones.</li>
+          <li><strong>Radar Slow:</strong> slows enemies for 3 seconds.</li>
+          <li><strong>Auto Battery:</strong> auto-fires for 5 seconds.</li>
+          <li><strong>Repair Kit:</strong> restores city health.</li>
+        </ul>
       </section>
     </main>
 

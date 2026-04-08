@@ -1,21 +1,70 @@
-# Lịch Vạn Niên 2025 (Web App)
+# Sky Shield
 
-Ứng dụng web tĩnh mô phỏng nhóm tiện ích chính của app Lịch Vạn Niên trên Zegome, tập trung vào nhu cầu tra cứu nhanh hằng ngày.
+Sky Shield is a simple browser defense game built with plain **HTML, CSS, and JavaScript**.
 
-## Tính năng
+## Game features
 
-- Đổi ngày Dương lịch sang Âm lịch (hỗ trợ múi giờ).
-- Hiển thị Can Chi năm âm lịch và Can Chi ngày.
-- Tra cứu giờ hoàng đạo theo ngày.
-- Xem hợp tuổi cơ bản theo địa chi.
-- Ghi chú ngày âm (lưu local trên trình duyệt).
-- Tử vi nhanh 12 cung hoàng đạo.
+- Defend a city from waves of triangular drones.
+- Click/tap to launch interceptors toward your selected point.
+- City health drops when drones reach the buildings.
+- Score increases for each intercepted drone.
+- Difficulty increases every 20 points.
+- Four power-ups:
+  - **EMP Burst**: clears nearby drones.
+  - **Radar Slow**: slows enemies for 3 seconds.
+  - **Auto Battery**: auto-fires for 5 seconds.
+  - **Repair Kit**: restores city health.
+- Start screen + game over screen + restart button.
+- Local high score with `localStorage`.
+- Mobile-friendly tap controls.
+- Clean minimalist visuals.
+- Simple sound toggle.
 
-## Chạy nhanh
+## Project files
 
-Mở trực tiếp `index.html` bằng trình duyệt.
+- `index.html` – game layout and UI panels.
+- `style.css` – responsive minimalist styles.
+- `script.js` – game logic, drawing, collisions, power-ups, scoring.
+- `README.md` – setup + deployment guide.
 
-## Nguồn tham chiếu tính năng
+## How to run locally
 
-Tham khảo mô tả ứng dụng “Lịch Vạn Niên” tại trang sản phẩm Zegome:
-https://zegome.com/product/lich-van-nien/
+### Option 1 (quickest)
+1. Download or clone this project.
+2. Open `index.html` in your browser.
+
+### Option 2 (recommended local server)
+Use a small server so browser behavior matches production:
+
+```bash
+# If you have Python installed
+python3 -m http.server 8080
+```
+
+Then open:
+
+- `http://localhost:8080`
+
+## How to deploy to Netlify
+
+### Deploy with drag-and-drop (easiest)
+1. Go to [https://app.netlify.com/drop](https://app.netlify.com/drop).
+2. Drag your project folder (or zipped folder contents) into the page.
+3. Netlify will publish it and give you a live URL.
+
+### Deploy from Git (recommended)
+1. Push this project to GitHub/GitLab/Bitbucket.
+2. In Netlify, click **Add new site** → **Import an existing project**.
+3. Connect your repository.
+4. Build settings for this project:
+   - **Build command**: *(leave empty)*
+   - **Publish directory**: `.`
+5. Click **Deploy site**.
+
+Because this is a static site, no build step is required.
+
+## Tips for customization
+
+- Change colors in `style.css` root variables.
+- Tune difficulty in `script.js` by editing `spawnGap`, drone speed, and level math.
+- Adjust power-up drop chance by changing `Math.random() < 0.14`.
