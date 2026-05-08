@@ -1,53 +1,597 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sky Shield</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <main class="app">
-      <header class="hud">
-        <h1>Sky Shield</h1>
-        <div class="hud-stats">
-          <p>Score: <span id="score">0</span></p>
-          <p>Health: <span id="health">100</span></p>
-          <p>Level: <span id="level">1</span></p>
-          <p>High Score: <span id="high-score">0</span></p>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dynamic Expert Ensemble Roulette Group Tester</title>
+  <style>
+    :root {
+      --bg: #0f172a; --panel: #111827; --card: #1f2937; --soft: #334155;
+      --text: #e5e7eb; --muted: #94a3b8; --accent: #38bdf8; --good: #22c55e;
+      --bad: #ef4444; --warn: #f59e0b; --purple: #a78bfa; --border: rgba(148,163,184,.22);
+      --shadow: 0 22px 70px rgba(0,0,0,.28); --radius: 18px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: radial-gradient(circle at top left, #1e3a8a 0, transparent 38rem), var(--bg); color: var(--text); }
+    button, input, select, textarea { font: inherit; }
+    .app { width: min(1480px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 44px; }
+    .hero { display: flex; justify-content: space-between; gap: 18px; align-items: end; margin-bottom: 18px; }
+    h1 { margin: 0; font-size: clamp(1.8rem, 3vw, 3.15rem); letter-spacing: -.04em; }
+    .subtitle { color: var(--muted); margin: 8px 0 0; font-size: 1.05rem; }
+    .pill { border: 1px solid var(--border); background: rgba(17,24,39,.76); color: var(--muted); padding: 9px 12px; border-radius: 999px; white-space: nowrap; }
+    .grid { display: grid; grid-template-columns: minmax(340px, 430px) 1fr; gap: 18px; align-items: start; }
+    .card { background: rgba(17,24,39,.88); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
+    .card h2, .card h3 { margin: 0 0 12px; letter-spacing: -.02em; }
+    label { display: block; color: #cbd5e1; font-weight: 650; margin: 14px 0 7px; }
+    textarea, select, input[type="number"] { width: 100%; color: var(--text); background: #020617; border: 1px solid var(--border); border-radius: 12px; padding: 11px 12px; outline: none; }
+    textarea { min-height: 240px; resize: vertical; line-height: 1.45; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    textarea:focus, select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(56,189,248,.15); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .checks { display: flex; flex-wrap: wrap; gap: 12px; color: var(--muted); margin: 13px 0; }
+    .checks label { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 600; color: var(--muted); }
+    .btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .btn { border: 0; border-radius: 12px; padding: 11px 14px; cursor: pointer; font-weight: 800; color: #06101f; background: linear-gradient(135deg, #38bdf8, #a78bfa); }
+    .btn.secondary { background: #334155; color: var(--text); border: 1px solid var(--border); }
+    .btn.danger { background: #7f1d1d; color: #fecaca; }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .samples .btn { padding: 8px 10px; font-size: .88rem; }
+    .preview { display: none; width: 100%; max-height: 220px; object-fit: contain; background: #020617; border: 1px dashed var(--border); border-radius: 14px; margin-top: 8px; }
+    .drop-note { color: var(--muted); font-size: .9rem; border: 1px dashed var(--border); border-radius: 12px; padding: 10px; }
+    .alert { display: none; margin: 12px 0; border-radius: 12px; padding: 11px 12px; border: 1px solid; }
+    .alert.warn { display: block; color: #fde68a; background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.35); }
+    .alert.err { display: block; color: #fecaca; background: rgba(239,68,68,.13); border-color: rgba(239,68,68,.35); }
+    .signal-card { background: linear-gradient(135deg, rgba(56,189,248,.16), rgba(167,139,250,.13)); }
+    .signal-main { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .big-signal { font-size: clamp(2rem, 4vw, 4.6rem); font-weight: 950; letter-spacing: -.06em; }
+    .muted { color: var(--muted); }
+    .badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 5px 9px; font-weight: 850; font-size: .82rem; white-space: nowrap; }
+    .b-g1 { background: rgba(56,189,248,.18); color: #7dd3fc; border: 1px solid rgba(56,189,248,.35); }
+    .b-g2 { background: rgba(167,139,250,.18); color: #c4b5fd; border: 1px solid rgba(167,139,250,.35); }
+    .b-g3 { background: rgba(34,197,94,.16); color: #86efac; border: 1px solid rgba(34,197,94,.32); }
+    .b-none, .b-skip { background: rgba(148,163,184,.14); color: #cbd5e1; border: 1px solid var(--border); }
+    .b-win { background: rgba(34,197,94,.16); color: #86efac; border: 1px solid rgba(34,197,94,.32); }
+    .b-loss { background: rgba(239,68,68,.16); color: #fca5a5; border: 1px solid rgba(239,68,68,.32); }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 12px; margin-top: 14px; }
+    .metric { background: rgba(31,41,55,.72); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+    .metric .value { font-size: 1.45rem; font-weight: 900; margin-top: 4px; }
+    .section { margin-top: 18px; }
+    .table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 14px; }
+    table { width: 100%; border-collapse: collapse; min-width: 920px; background: rgba(2,6,23,.34); }
+    th, td { padding: 10px 11px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+    th { position: sticky; top: 0; background: #111827; z-index: 1; color: #cbd5e1; font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; }
+    tr:hover td { background: rgba(56,189,248,.045); }
+    .chain { max-height: 180px; overflow: auto; background: #020617; border: 1px solid var(--border); border-radius: 14px; padding: 12px; line-height: 1.8; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .debug { font-size: .82rem; color: #cbd5e1; white-space: pre-wrap; min-width: 320px; }
+    .footer-note { margin-top: 14px; color: var(--muted); font-size: .9rem; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .summary-grid { grid-template-columns: repeat(2, 1fr); } .hero { display: block; } .pill { display: inline-block; margin-top: 12px; } }
+    @media (max-width: 560px) { .row, .summary-grid { grid-template-columns: 1fr; } .app { width: min(100% - 16px, 1480px); } .card { padding: 14px; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <div>
+        <h1>Dynamic Expert Ensemble Roulette Group Tester</h1>
+        <p class="subtitle">Agreement-based multi-expert Markov/frequency model for transparent educational backtesting.</p>
+      </div>
+      <div class="pill">Local-only · deterministic · no OCR · no backend</div>
+    </header>
+
+    <section class="grid">
+      <aside class="card">
+        <h2>Inputs</h2>
+        <label for="screenshotInput">Screenshot upload / paste reference</label>
+        <input id="screenshotInput" type="file" accept="image/*" />
+        <img id="imagePreview" class="preview" alt="Uploaded roulette screenshot preview" />
+        <p class="drop-note">Paste an image from your clipboard or upload one. It is shown only for human reference; numbers are parsed only from the textarea.</p>
+
+        <label for="numberInput">Roulette numbers</label>
+        <textarea id="numberInput" placeholder="36 7 34 34 17 33 34 15 22 29 16 6&#10;4 29 11 18 33 8 2 27 31 16 14 22"></textarea>
+
+        <div class="samples btns">
+          <button class="btn secondary" type="button" data-sample="1">Load Sample 1</button>
+          <button class="btn secondary" type="button" data-sample="2">Load Sample 2</button>
+          <button class="btn secondary" type="button" data-sample="3">Load Sample 3</button>
         </div>
-        <button id="sound-toggle" class="mini-btn" type="button" aria-label="Toggle sound">🔊 Sound: ON</button>
-      </header>
 
-      <section class="game-shell">
-        <canvas id="game-canvas" width="900" height="550" aria-label="Sky Shield game"></canvas>
+        <label for="readingOrder">Reading order</label>
+        <select id="readingOrder">
+          <option value="rows">Rows as screenshot: top-to-bottom, convert to chronological bottom-up + right-to-left</option>
+          <option value="chrono">Already chronological: oldest to newest</option>
+          <option value="reverse">Reverse flat list: newest to oldest</option>
+        </select>
 
-        <section id="start-screen" class="overlay visible" aria-live="polite">
-          <h2>Defend the City</h2>
-          <p>Tap/click anywhere to fire an interceptor.</p>
-          <p>Destroy triangle drones before they reach your buildings.</p>
-          <button id="start-btn" class="main-btn" type="button">Start Mission</button>
+        <div class="row">
+          <div><label for="seedInput">Seed index</label><input id="seedInput" type="number" min="1" max="5000" value="13" /></div>
+          <div><label for="recentInput">Recent expert window</label><input id="recentInput" type="number" min="5" max="200" value="20" /></div>
+        </div>
+
+        <div class="checks">
+          <label><input id="showSkipped" type="checkbox" /> Show skipped rows</label>
+          <label><input id="showDebug" type="checkbox" /> Show debug details</label>
+        </div>
+
+        <div id="message" class="alert"></div>
+        <div class="btns">
+          <button id="runBtn" class="btn" type="button">Run Ensemble</button>
+          <button id="clearBtn" class="btn danger" type="button">Clear</button>
+        </div>
+      </aside>
+
+      <section>
+        <section class="card signal-card" id="currentCard">
+          <div class="signal-main">
+            <div>
+              <h2>Current Live Signal</h2>
+              <div class="muted" id="latestInfo">Paste numbers and run the ensemble.</div>
+            </div>
+            <div class="big-signal" id="currentSignal">—</div>
+          </div>
+          <p id="signalReason" class="muted">No run yet.</p>
+          <div id="currentVotes"></div>
         </section>
 
-        <section id="game-over-screen" class="overlay" aria-live="polite">
-          <h2>Game Over</h2>
-          <p>Your score: <span id="final-score">0</span></p>
-          <p>High score: <span id="final-high-score">0</span></p>
-          <button id="restart-btn" class="main-btn" type="button">Restart</button>
+        <section class="card section">
+          <h2>Backtest Summary</h2>
+          <div id="summaryGrid" class="summary-grid"></div>
+        </section>
+
+        <section class="card section">
+          <h2>Individual Expert Rankings</h2>
+          <div class="table-wrap"><table id="expertTable"></table></div>
         </section>
       </section>
+    </section>
 
-      <section class="legend">
-        <h3>Power-Ups</h3>
-        <ul>
-          <li><strong>EMP Burst:</strong> clears nearby drones.</li>
-          <li><strong>Radar Slow:</strong> slows enemies for 3 seconds.</li>
-          <li><strong>Auto Battery:</strong> auto-fires for 5 seconds.</li>
-          <li><strong>Repair Kit:</strong> restores city health.</li>
-        </ul>
-      </section>
-    </main>
+    <section class="card section">
+      <h2>Interpreted Chronological Chain</h2>
+      <div id="chainBox" class="chain muted">No interpreted chain yet.</div>
+      <div class="btns">
+        <button id="exportChainBtn" class="btn secondary" type="button" disabled>Export interpreted chain CSV</button>
+        <button id="exportHistoryBtn" class="btn secondary" type="button" disabled>Export bet history CSV</button>
+        <button id="copySignalBtn" class="btn secondary" type="button" disabled>Copy current signal summary</button>
+      </div>
+      <p class="footer-note">Reminder: roulette outcomes are random. This tool audits deterministic historical rules; it does not guarantee future profit.</p>
+    </section>
 
-    <script src="script.js"></script>
-  </body>
+    <section class="card section">
+      <h2>Detailed Bet History</h2>
+      <div class="table-wrap"><table id="historyTable"></table></div>
+    </section>
+  </main>
+
+<script>
+'use strict';
+
+const GROUPS = ['G1', 'G2', 'G3'];
+const PAYOUT_WIN = 2;
+const PAYOUT_LOSS = -1;
+const DEFAULT_SEED = 13;
+const DEFAULT_RECENT_WINDOW = 20;
+const EXPERTS = [
+  { id: 'E1', name: 'Contrarian W18' },
+  { id: 'E2', name: 'Contrarian W13' },
+  { id: 'E3', name: 'Frequency Cold W18' },
+  { id: 'E4', name: 'Hybrid Contrarian + Frequency Cold Filter' },
+  { id: 'E5', name: 'Multi-Window Contrarian Consensus' }
+];
+const SAMPLES = {
+  1: { order: 'chrono', text: '32 19 29 32 3 32 2 10 28 4 23 19 27 36 18 30 2 25 14 26 24 23 21 10 9 15 3 4 18 28 4 20 0 18 27 11 17 2 2 35 27 2 29 11 26 30 31 14 9 29 33 29 36 0 21 19 4 3 29 35 11 36 22 14 13 15 32 27 36 15 14 0 25 8 6 20 7 23 31 6 32 17 9 28 35 13 35 25 7 10 8 14 27 32 29 31 6 34 14 24 21 24 9 12 13 2 9 2 36 3 13 6 31 32 30 32 21 30 2 11 36 14 26 31 14 36 15 16 35 0 13 25 27 32 10 34 1 19 31 0' },
+  2: { order: 'chrono', text: '0, 12, 25, 0, 18, 31, 7, 0, 22, 36, 4, 15, 0, 29, 11, 20, 33, 0, 6, 27, 14, 35, 8, 0, 24, 2, 30, 17, 0, 9, 26, 13, 34, 5, 0, 21, 32, 10, 28, 16, 0, 23, 1, 19, 36' },
+  3: { order: 'rows', text: '36 7 34 34 17 33 34 15 22 29 16 6\n4 29 11 18 33 8 2 27 31 16 14 22\n5 13 28 9 35 20 12 26 3 17 30 1\n24 32 10 21 6 25 15 34 2 19 27 11' }
+};
+let lastResult = null;
+
+const $ = (id) => document.getElementById(id);
+const fmtPct = (value) => Number.isFinite(value) ? `${(value * 100).toFixed(2)}%` : '0.00%';
+const fmtNum = (value, digits = 2) => Number.isFinite(value) ? value.toFixed(digits) : '0.00';
+const safe = (value) => value == null ? '—' : String(value);
+
+function numberToGroup(number) {
+  if (number >= 1 && number <= 12) return 'G1';
+  if (number >= 13 && number <= 24) return 'G2';
+  if (number >= 25 && number <= 36) return 'G3';
+  return null;
+}
+
+function groupLabel(group) {
+  if (group === 'G1') return 'G1 = 1–12';
+  if (group === 'G2') return 'G2 = 13–24';
+  if (group === 'G3') return 'G3 = 25–36';
+  return 'Zero / no group';
+}
+
+function badge(text, type = '') {
+  const cls = type || (text === 'G1' || text === 'BET G1' ? 'b-g1' : text === 'G2' || text === 'BET G2' ? 'b-g2' : text === 'G3' || text === 'BET G3' ? 'b-g3' : text === 'WIN' ? 'b-win' : text === 'LOSS' ? 'b-loss' : 'b-none');
+  return `<span class="badge ${cls}">${text}</span>`;
+}
+
+function parseNumbersFromText(text) {
+  const matches = text.match(/-?\d+/g) || [];
+  const invalid = [];
+  const numbers = [];
+  matches.forEach((raw) => {
+    const n = Number(raw);
+    if (Number.isInteger(n) && n >= 0 && n <= 36) numbers.push(n);
+    else invalid.push(raw);
+  });
+  return { numbers, invalid };
+}
+
+function convertRowsToChronological(text) {
+  const rows = text.split(/\r?\n/).map(line => parseNumbersFromText(line)).filter(row => row.numbers.length || row.invalid.length);
+  const invalid = rows.flatMap(row => row.invalid);
+  const chain = [];
+  for (let r = rows.length - 1; r >= 0; r--) {
+    for (let c = rows[r].numbers.length - 1; c >= 0; c--) chain.push(rows[r].numbers[c]);
+  }
+  return { chain, invalid };
+}
+
+function parseInput(text, order) {
+  if (order === 'rows') return convertRowsToChronological(text);
+  const parsed = parseNumbersFromText(text);
+  return { chain: order === 'reverse' ? parsed.numbers.slice().reverse() : parsed.numbers, invalid: parsed.invalid };
+}
+
+function getWindow(chain, i, size) {
+  return chain.slice(Math.max(0, i - size), i);
+}
+
+function countGroups(numbers) {
+  const counts = { G1: 0, G2: 0, G3: 0 };
+  let total = 0;
+  numbers.forEach(n => {
+    const g = numberToGroup(n);
+    if (g) { counts[g] += 1; total += 1; }
+  });
+  return { counts, total };
+}
+
+function uniqueMinGroup(counts) {
+  const min = Math.min(...GROUPS.map(g => counts[g]));
+  const winners = GROUPS.filter(g => counts[g] === min);
+  return winners.length === 1 ? winners[0] : null;
+}
+
+function maxLosingStreak(records) {
+  let current = 0, max = 0;
+  records.forEach(r => {
+    if (r.result === 'LOSS') { current += 1; max = Math.max(max, current); }
+    else current = 0;
+  });
+  return max;
+}
+
+function scoreSignal(signal, actualNumber) {
+  if (!signal) return { result: 'SKIP', units: 0, isBet: false, win: false, loss: false };
+  const actualGroup = numberToGroup(actualNumber);
+  if (actualGroup && actualGroup === signal) return { result: 'WIN', units: PAYOUT_WIN, isBet: true, win: true, loss: false };
+  return { result: 'LOSS', units: PAYOUT_LOSS, isBet: true, win: false, loss: true };
+}
+
+function contrarianSignal(chain, i, windowSize, minCases = 3, dominanceThreshold = 0.55) {
+  const currentGroup = numberToGroup(chain[i]);
+  const debug = { windowSize, currentGroup, counts: { G1: 0, G2: 0, G3: 0 }, cases: 0, dominance: 0, reason: '' };
+  if (!currentGroup) { debug.reason = 'Current number is 0/no group.'; return { signal: null, debug }; }
+  const window = getWindow(chain, i, windowSize);
+  for (let j = 0; j < window.length - 1; j++) {
+    if (numberToGroup(window[j]) === currentGroup) {
+      const nextGroup = numberToGroup(window[j + 1]);
+      if (nextGroup) { debug.counts[nextGroup] += 1; debug.cases += 1; }
+    }
+  }
+  if (debug.cases < minCases) { debug.reason = `Only ${debug.cases} usable transition cases.`; return { signal: null, debug }; }
+  const leaderCount = Math.max(...GROUPS.map(g => debug.counts[g]));
+  debug.dominance = leaderCount / debug.cases;
+  if (debug.dominance < dominanceThreshold) { debug.reason = `Dominance ${fmtPct(debug.dominance)} below ${fmtPct(dominanceThreshold)}.`; return { signal: null, debug }; }
+  const coldest = uniqueMinGroup(debug.counts);
+  if (!coldest) { debug.reason = 'Coldest group tied.'; return { signal: null, debug }; }
+  debug.reason = `Unique coldest ${coldest} with leader dominance ${fmtPct(debug.dominance)}.`;
+  return { signal: coldest, debug };
+}
+
+function frequencyColdSignal(chain, i, windowSize = 18) {
+  const window = getWindow(chain, i, windowSize);
+  const { counts, total } = countGroups(window);
+  const debug = { windowSize, counts, total, reason: '' };
+  if (total < 6) { debug.reason = `Only ${total} valid groups in window.`; return { signal: null, debug }; }
+  const coldest = uniqueMinGroup(counts);
+  if (!coldest) { debug.reason = 'Coldest frequency tied.'; return { signal: null, debug }; }
+  const min = counts[coldest];
+  const max = Math.max(...GROUPS.map(g => counts[g]));
+  if (max - min < 2) { debug.reason = `Hot-cold gap ${max - min} below 2.`; return { signal: null, debug }; }
+  debug.reason = `Unique coldest ${coldest}; hot-cold gap ${max - min}.`;
+  return { signal: coldest, debug };
+}
+
+function hybridSignal(chain, i) {
+  const base = contrarianSignal(chain, i, 18);
+  const frequency = countGroups(getWindow(chain, i, 18));
+  const min = Math.min(...GROUPS.map(g => frequency.counts[g]));
+  const isColdOrTiedCold = base.signal && frequency.counts[base.signal] === min;
+  return {
+    signal: isColdOrTiedCold ? base.signal : null,
+    debug: { base: base.debug, frequency: frequency.counts, reason: !base.signal ? 'E1 W18 returned no signal.' : isColdOrTiedCold ? `${base.signal} accepted as cold/tied-cold.` : `${base.signal} rejected by frequency cold filter.` }
+  };
+}
+
+function multiWindowSignal(chain, i) {
+  const windows = [12, 18, 30].map(w => ({ window: w, ...contrarianSignal(chain, i, w) }));
+  const votes = { G1: 0, G2: 0, G3: 0 };
+  windows.forEach(w => { if (w.signal) votes[w.signal] += 1; });
+  const agreed = GROUPS.find(g => votes[g] >= 2) || null;
+  return { signal: agreed, debug: { windows, votes, reason: agreed ? `At least two windows agree on ${agreed}.` : 'No two-window consensus.' } };
+}
+
+function runExpertsAtIndex(chain, i) {
+  const e1 = contrarianSignal(chain, i, 18);
+  const e2 = contrarianSignal(chain, i, 13);
+  const e3 = frequencyColdSignal(chain, i, 18);
+  const e4 = hybridSignal(chain, i);
+  const e5 = multiWindowSignal(chain, i);
+  return {
+    E1: e1.signal, E2: e2.signal, E3: e3.signal, E4: e4.signal, E5: e5.signal,
+    debug: { E1: e1.debug, E2: e2.debug, E3: e3.debug, E4: e4.debug, E5: e5.debug }
+  };
+}
+
+function newExpertState() {
+  const state = {};
+  EXPERTS.forEach(e => state[e.id] = { bets: 0, wins: 0, losses: 0, net: 0, records: [] });
+  return state;
+}
+
+function getRecentPerformance(expertState, recentWindow) {
+  const records = expertState.records.slice(-recentWindow);
+  const bets = records.length;
+  const wins = records.filter(r => r.result === 'WIN').length;
+  const losses = records.filter(r => r.result === 'LOSS').length;
+  const net = records.reduce((sum, r) => sum + r.units, 0);
+  const hitRate = bets ? wins / bets : 0;
+  const edge = bets ? net / bets : 0;
+  return { bets, wins, losses, net, hitRate, edge, maxLoseStreak: maxLosingStreak(records) };
+}
+
+function isExpertActive(expertState, recentWindow) {
+  const recent = getRecentPerformance(expertState, recentWindow);
+  const reasons = [];
+  if (recent.bets < 5) reasons.push(`needs at least 5 recent bets (${recent.bets})`);
+  if (recent.net <= 0) reasons.push(`recent net must be > 0 (${recent.net})`);
+  if (recent.hitRate <= 1 / 3) reasons.push(`recent hit rate must be > 33.33% (${fmtPct(recent.hitRate)})`);
+  if (recent.maxLoseStreak > 4) reasons.push(`recent max losing streak must be <= 4 (${recent.maxLoseStreak})`);
+  return { active: reasons.length === 0, recent, reason: reasons.length ? reasons.join('; ') : 'passes all activation filters' };
+}
+
+function rankActiveExperts(expertStates, recentWindow) {
+  return EXPERTS.map(e => ({ ...e, ...isExpertActive(expertStates[e.id], recentWindow) }))
+    .filter(e => e.active)
+    .sort((a, b) => b.recent.edge - a.recent.edge || b.recent.net - a.recent.net || b.recent.hitRate - a.recent.hitRate || b.recent.bets - a.recent.bets || a.id.localeCompare(b.id));
+}
+
+function ensembleVote(signals, activeRanked, currentNumber) {
+  if (!numberToGroup(currentNumber)) return { finalSignal: null, topExperts: [], validVotes: [], voteCounts: { G1: 0, G2: 0, G3: 0 }, reason: 'latest/current number is 0, cannot be used as a group state' };
+  const topExperts = activeRanked.slice(0, 3);
+  const validVotes = topExperts.map(e => ({ id: e.id, name: e.name, signal: signals[e.id] })).filter(v => v.signal);
+  const voteCounts = { G1: 0, G2: 0, G3: 0 };
+  validVotes.forEach(v => voteCounts[v.signal] += 1);
+  if (topExperts.length < 2) return { finalSignal: null, topExperts, validVotes, voteCounts, reason: `fewer than 2 active experts (${topExperts.length})` };
+  if (validVotes.length < 2) return { finalSignal: null, topExperts, validVotes, voteCounts, reason: validVotes.length === 0 ? 'no expert signal from top active experts' : 'fewer than 2 top active experts give valid group signals' };
+  const winners = GROUPS.filter(g => voteCounts[g] >= 2);
+  if (winners.length === 1) return { finalSignal: winners[0], topExperts, validVotes, voteCounts, reason: `${winners[0]} has ${voteCounts[winners[0]]} agreeing votes` };
+  if (winners.length > 1) return { finalSignal: null, topExperts, validVotes, voteCounts, reason: 'tie between groups with at least 2 votes' };
+  return { finalSignal: null, topExperts, validVotes, voteCounts, reason: 'no agreement; no group reached 2 votes' };
+}
+
+function updateVirtualScores(expertStates, signals, actualNext, step, index) {
+  EXPERTS.forEach(e => {
+    const scored = scoreSignal(signals[e.id], actualNext);
+    if (!scored.isBet) return;
+    const st = expertStates[e.id];
+    st.bets += 1; st.wins += scored.win ? 1 : 0; st.losses += scored.loss ? 1 : 0; st.net += scored.units;
+    st.records.push({ step, index, signal: signals[e.id], actualNext, result: scored.result, units: scored.units });
+  });
+}
+
+function buildDebugText(row) {
+  const d = row.debug;
+  const activation = EXPERTS.map(e => `${e.id}: ${row.activation[e.id].active ? 'active' : 'inactive'} — ${row.activation[e.id].reason}`).join('\n');
+  const mw = d.E5.windows.map(w => `W${w.window}:${w.signal || 'null'} counts=${JSON.stringify(w.debug.counts)} cases=${w.debug.cases}`).join(' | ');
+  return `E1 W18 transitions: counts=${JSON.stringify(d.E1.counts)}, cases=${d.E1.cases}, dominance=${fmtPct(d.E1.dominance)}, reason=${d.E1.reason}\n` +
+    `E2 W13 transitions: counts=${JSON.stringify(d.E2.counts)}, cases=${d.E2.cases}, dominance=${fmtPct(d.E2.dominance)}, reason=${d.E2.reason}\n` +
+    `E3 Frequency W18: counts=${JSON.stringify(d.E3.counts)}, total=${d.E3.total}, reason=${d.E3.reason}\n` +
+    `E5 Multi-window: votes=${JSON.stringify(d.E5.votes)}; ${mw}; reason=${d.E5.reason}\n` +
+    `Activation reasons:\n${activation}`;
+}
+
+function runBacktest(chain, seedIndex = DEFAULT_SEED, recentWindow = DEFAULT_RECENT_WINDOW) {
+  const expertStates = newExpertState();
+  const history = [];
+  const stats = { totalNumbers: chain.length, decisionPoints: 0, bets: 0, wins: 0, losses: 0, skips: 0, net: 0, longestWinStreak: 0, longestLossStreak: 0 };
+  let winStreak = 0, lossStreak = 0, runningNet = 0;
+  for (let i = seedIndex; i <= chain.length - 2; i++) {
+    const step = history.length + 1;
+    const current = chain[i];
+    const actualNext = chain[i + 1];
+    const expertRun = runExpertsAtIndex(chain, i);
+    const activation = {};
+    EXPERTS.forEach(e => activation[e.id] = isExpertActive(expertStates[e.id], recentWindow));
+    const activeRanked = rankActiveExperts(expertStates, recentWindow);
+    const vote = ensembleVote(expertRun, activeRanked, current);
+    const score = scoreSignal(vote.finalSignal, actualNext);
+    if (score.isBet) {
+      stats.bets += 1; stats.wins += score.win ? 1 : 0; stats.losses += score.loss ? 1 : 0; runningNet += score.units; stats.net = runningNet;
+      if (score.win) { winStreak += 1; lossStreak = 0; } else { lossStreak += 1; winStreak = 0; }
+      stats.longestWinStreak = Math.max(stats.longestWinStreak, winStreak);
+      stats.longestLossStreak = Math.max(stats.longestLossStreak, lossStreak);
+    } else {
+      stats.skips += 1;
+    }
+    stats.decisionPoints += 1;
+    history.push({ step, index: i, currentNumber: current, currentGroup: numberToGroup(current), actualNext, actualNextGroup: numberToGroup(actualNext), signals: { E1: expertRun.E1, E2: expertRun.E2, E3: expertRun.E3, E4: expertRun.E4, E5: expertRun.E5 }, activeExperts: activeRanked.map(e => e.id), topExperts: vote.topExperts.map(e => e.id), finalSignal: vote.finalSignal, result: score.result, unitResult: score.units, runningNet, reason: vote.reason, voteCounts: vote.voteCounts, activation, debug: expertRun.debug });
+    updateVirtualScores(expertStates, expertRun, actualNext, step, i);
+  }
+  stats.hitRate = stats.bets ? stats.wins / stats.bets : 0;
+  stats.edge = stats.bets ? stats.net / stats.bets : 0;
+  return { expertStates, history, stats };
+}
+
+function calculateCurrentSignal(chain, expertStates, recentWindow) {
+  const i = chain.length - 1;
+  const latest = chain[i];
+  const currentGroup = numberToGroup(latest);
+  const expertRun = runExpertsAtIndex(chain, i);
+  const activation = {};
+  EXPERTS.forEach(e => activation[e.id] = isExpertActive(expertStates[e.id], recentWindow));
+  const activeRanked = rankActiveExperts(expertStates, recentWindow);
+  const vote = ensembleVote(expertRun, activeRanked, latest);
+  return { latest, currentGroup, signals: { E1: expertRun.E1, E2: expertRun.E2, E3: expertRun.E3, E4: expertRun.E4, E5: expertRun.E5 }, activeRanked, activation, ...vote };
+}
+
+function renderSummary(stats) {
+  const metrics = [
+    ['Total numbers', stats.totalNumbers], ['Decision points', stats.decisionPoints], ['Ensemble bets', stats.bets], ['Wins', stats.wins],
+    ['Losses', stats.losses], ['Skips', stats.skips], ['Hit rate', fmtPct(stats.hitRate)], ['Net units', stats.net],
+    ['Edge per bet', fmtNum(stats.edge)], ['Longest win streak', stats.longestWinStreak], ['Longest loss streak', stats.longestLossStreak]
+  ];
+  $('summaryGrid').innerHTML = metrics.map(([k, v]) => `<div class="metric"><div class="muted">${k}</div><div class="value">${v}</div></div>`).join('');
+}
+
+function renderCurrentSignal(current) {
+  const label = current.finalSignal ? `BET ${current.finalSignal}` : 'NO BET';
+  $('currentSignal').innerHTML = badge(label);
+  $('latestInfo').innerHTML = `Latest number: <strong>${current.latest}</strong> · Latest group: <strong>${groupLabel(current.currentGroup)}</strong>`;
+  const top = current.topExperts.length ? current.topExperts.map(e => `${e.id} (${safe(current.signals[e.id])})`).join(', ') : 'none';
+  const votes = current.validVotes.length ? current.validVotes.map(v => `${v.id}: ${v.signal}`).join(', ') : 'none';
+  $('signalReason').textContent = `Active experts: ${current.activeRanked.length}. Top 3 active experts: ${top}. Current valid votes: ${votes}. Agreement result: ${current.reason}.`;
+  $('currentVotes').innerHTML = EXPERTS.map(e => `${e.id} ${badge(current.signals[e.id] || 'NO BET')}`).join(' ');
+}
+
+function renderExpertTable(expertStates, current, recentWindow) {
+  const rows = EXPERTS.map(e => {
+    const st = expertStates[e.id];
+    const recent = getRecentPerformance(st, recentWindow);
+    const active = current.activation[e.id].active;
+    return `<tr><td><strong>${e.id}</strong> — ${e.name}</td><td>${st.bets}</td><td>${st.wins}</td><td>${st.losses}</td><td>${st.net}</td><td>${fmtPct(st.bets ? st.wins / st.bets : 0)}</td><td>${recent.bets}</td><td>${recent.net}</td><td>${fmtNum(recent.edge)}</td><td>${active ? badge('YES', 'b-win') : badge('NO', 'b-loss')}<br><span class="muted">${current.activation[e.id].reason}</span></td><td>${badge(current.signals[e.id] || 'NO BET')}</td></tr>`;
+  }).join('');
+  $('expertTable').innerHTML = `<thead><tr><th>Expert name</th><th>Virtual bets</th><th>Virtual wins</th><th>Virtual losses</th><th>Virtual net</th><th>Virtual hit rate</th><th>Recent bets</th><th>Recent net</th><th>Recent edge</th><th>Active</th><th>Current signal</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+function renderHistoryTable() {
+  if (!lastResult) { $('historyTable').innerHTML = ''; return; }
+  const showSkipped = $('showSkipped').checked;
+  const showDebug = $('showDebug').checked;
+  const rows = lastResult.history.filter(r => showSkipped || r.result !== 'SKIP').map(r => {
+    const signalCells = EXPERTS.map(e => `<td>${badge(r.signals[e.id] || 'NO BET')}</td>`).join('');
+    const debugCell = showDebug ? `<td class="debug">${escapeHtml(buildDebugText(r))}</td>` : '';
+    return `<tr><td>${r.step}</td><td>${r.index}</td><td>${r.currentNumber}</td><td>${safe(r.currentGroup)}</td><td>${r.actualNext}</td><td>${safe(r.actualNextGroup)}</td>${signalCells}<td>${r.activeExperts.join(', ') || '—'}</td><td>${r.topExperts.join(', ') || '—'}</td><td>${badge(r.finalSignal ? `BET ${r.finalSignal}` : 'NO BET')}</td><td>${badge(r.result, r.result === 'SKIP' ? 'b-skip' : '')}</td><td>${r.unitResult}</td><td>${r.runningNet}</td>${debugCell}</tr>`;
+  }).join('');
+  const debugHead = showDebug ? '<th>Debug details</th>' : '';
+  $('historyTable').innerHTML = `<thead><tr><th>Step</th><th>Chain index</th><th>Current #</th><th>Current group</th><th>Actual next #</th><th>Actual next group</th><th>E1</th><th>E2</th><th>E3</th><th>E4</th><th>E5</th><th>Active experts</th><th>Top experts</th><th>Final signal</th><th>Result</th><th>Units</th><th>Running net</th>${debugHead}</tr></thead><tbody>${rows || `<tr><td colspan="${showDebug ? 18 : 17}" class="muted">No rows to show. Enable skipped rows or run a chain that creates ensemble bets.</td></tr>`}</tbody>`;
+}
+
+function renderChain(chain) {
+  $('chainBox').innerHTML = chain.length ? chain.map((n, idx) => `<span title="index ${idx}">${n}</span>`).join(' ') : 'No interpreted chain yet.';
+}
+
+function showMessage(text, type = 'warn') {
+  const el = $('message');
+  el.className = `alert ${type}`;
+  el.textContent = text;
+  el.style.display = text ? 'block' : 'none';
+}
+
+function escapeHtml(text) {
+  return String(text).replace(/[&<>'"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
+}
+
+function csvEscape(value) {
+  const s = value == null ? '' : String(value);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function downloadCSV(filename, rows) {
+  const csv = rows.map(row => row.map(csvEscape).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+}
+
+function exportCSV(kind) {
+  if (!lastResult) return;
+  if (kind === 'chain') {
+    downloadCSV('interpreted-chain.csv', [['index', 'number', 'group'], ...lastResult.chain.map((n, i) => [i, n, numberToGroup(n) || 'ZERO'])]);
+    return;
+  }
+  const header = ['step','index','current number','current group','actual next number','actual next group','E1 signal','E2 signal','E3 signal','E4 signal','E5 signal','active experts','top experts','final signal','result','unit result','running net'];
+  const rows = lastResult.history.map(r => [r.step, r.index, r.currentNumber, r.currentGroup || 'ZERO', r.actualNext, r.actualNextGroup || 'ZERO', r.signals.E1, r.signals.E2, r.signals.E3, r.signals.E4, r.signals.E5, r.activeExperts.join('|'), r.topExperts.join('|'), r.finalSignal || 'NO BET', r.result, r.unitResult, r.runningNet]);
+  downloadCSV('bet-history.csv', [header, ...rows]);
+}
+
+function copySignalSummary() {
+  if (!lastResult) return;
+  const c = lastResult.current;
+  const text = `Dynamic Expert Ensemble current signal: ${c.finalSignal ? 'BET ' + c.finalSignal : 'NO BET'}\nLatest number: ${c.latest}\nLatest group: ${groupLabel(c.currentGroup)}\nReason: ${c.reason}\nActive experts: ${c.activeRanked.length}\nTop experts: ${c.topExperts.map(e => `${e.id}:${c.signals[e.id] || 'NO BET'}`).join(', ') || 'none'}\nBacktest bets: ${lastResult.stats.bets}, wins: ${lastResult.stats.wins}, losses: ${lastResult.stats.losses}, net: ${lastResult.stats.net}, edge: ${fmtNum(lastResult.stats.edge)}`;
+  navigator.clipboard.writeText(text).then(() => showMessage('Current signal summary copied to clipboard.', 'warn')).catch(() => showMessage('Clipboard copy failed. Your browser may require HTTPS or user permission.', 'warn'));
+}
+
+function handleRun() {
+  const seed = Math.max(1, Number($('seedInput').value) || DEFAULT_SEED);
+  const recentWindow = Math.max(5, Number($('recentInput').value) || DEFAULT_RECENT_WINDOW);
+  const text = $('numberInput').value.trim();
+  if (!text) { showMessage('Please paste or type roulette numbers before running.', 'err'); return; }
+  const { chain, invalid } = parseInput(text, $('readingOrder').value);
+  renderChain(chain);
+  if (!chain.length) { showMessage('No valid roulette numbers were found. Enter integers from 0 to 36.', 'err'); return; }
+  if (chain.length < seed + 1) { showMessage(`Need at least ${seed + 1} numbers to backtest with seed ${seed}.`, 'err'); return; }
+  const warning = invalid.length ? `Ignored invalid numbers outside 0–36: ${invalid.join(', ')}` : '';
+  const backtest = runBacktest(chain, seed, recentWindow);
+  const current = calculateCurrentSignal(chain, backtest.expertStates, recentWindow);
+  lastResult = { chain, current, ...backtest, seed, recentWindow };
+  renderSummary(backtest.stats);
+  renderCurrentSignal(current);
+  renderExpertTable(backtest.expertStates, current, recentWindow);
+  renderHistoryTable();
+  $('exportChainBtn').disabled = false; $('exportHistoryBtn').disabled = false; $('copySignalBtn').disabled = false;
+  showMessage(warning || 'Run complete. Review the interpreted chain and history for auditability.', warning ? 'warn' : 'warn');
+}
+
+function clearAll() {
+  $('numberInput').value = ''; $('imagePreview').style.display = 'none'; $('imagePreview').removeAttribute('src');
+  lastResult = null; renderChain([]); $('summaryGrid').innerHTML = ''; $('expertTable').innerHTML = ''; $('historyTable').innerHTML = '';
+  $('currentSignal').textContent = '—'; $('latestInfo').textContent = 'Paste numbers and run the ensemble.'; $('signalReason').textContent = 'No run yet.'; $('currentVotes').innerHTML = '';
+  $('exportChainBtn').disabled = true; $('exportHistoryBtn').disabled = true; $('copySignalBtn').disabled = true; showMessage('', 'warn');
+}
+
+function showImageFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = () => { $('imagePreview').src = reader.result; $('imagePreview').style.display = 'block'; };
+  reader.readAsDataURL(file);
+}
+
+$('runBtn').addEventListener('click', handleRun);
+$('clearBtn').addEventListener('click', clearAll);
+$('showSkipped').addEventListener('change', renderHistoryTable);
+$('showDebug').addEventListener('change', renderHistoryTable);
+$('exportChainBtn').addEventListener('click', () => exportCSV('chain'));
+$('exportHistoryBtn').addEventListener('click', () => exportCSV('history'));
+$('copySignalBtn').addEventListener('click', copySignalSummary);
+$('screenshotInput').addEventListener('change', (event) => showImageFile(event.target.files[0]));
+document.addEventListener('paste', (event) => {
+  for (const item of event.clipboardData?.items || []) {
+    if (item.type.startsWith('image/')) showImageFile(item.getAsFile());
+  }
+});
+document.querySelectorAll('[data-sample]').forEach(btn => btn.addEventListener('click', () => {
+  const sample = SAMPLES[btn.dataset.sample];
+  $('numberInput').value = sample.text; $('readingOrder').value = sample.order; showMessage(`Sample ${btn.dataset.sample} loaded. Click Run Ensemble.`, 'warn');
+}));
+
+renderSummary({ totalNumbers: 0, decisionPoints: 0, bets: 0, wins: 0, losses: 0, skips: 0, hitRate: 0, net: 0, edge: 0, longestWinStreak: 0, longestLossStreak: 0 });
+$('expertTable').innerHTML = '<tbody><tr><td class="muted">Run the ensemble to populate expert performance.</td></tr></tbody>';
+$('historyTable').innerHTML = '<tbody><tr><td class="muted">Run the ensemble to populate detailed bet history.</td></tr></tbody>';
+</script>
+</body>
 </html>
